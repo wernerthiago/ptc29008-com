@@ -13,8 +13,11 @@ public:
 	APC220();
 	virtual ~APC220();
 	void send(char * msg);
+	char * receive();
+	char receiveFSM();
 	void closed();
 	void sendFSM(int tty_fd, char data, int count, int length);
+//	char receiveFSM(int tty_fd, char data, int count, int length);
 private:
 	int tty_fd;
 };

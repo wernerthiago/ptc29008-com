@@ -13,6 +13,7 @@
 #include <fcntl.h>
 #include <termios.h>
 #include <iostream>
+#include <sys/stat.h>
 #include <sys/types.h>
 
 using namespace std;
@@ -65,6 +66,34 @@ void APC220::send(char* msg) {
 
 void APC220::closed() {
 	close(tty_fd);
+}
+
+char * APC220::receive(){
+	char * mensagem;
+	int i = 0;
+	while(mensagem[i] = receiveFSM()){
+		i++;
+	}
+	return mensagem;
+}
+
+char APC220::receiveFSM() {
+	char data;
+	int receive = read(tty_fd,&data,1);
+	switch(data){
+	case 0x7E:
+		receive = read(tty_fd,&data,1);
+		return data;
+		break;
+	case 0x7D:
+		receive = read(tty_fd,&data,1);
+		data = data ^ 0x20;
+		return data;
+		break;
+	default:
+		return data;
+		break;
+	}
 }
 
 void APC220::sendFSM(int tty_fd, char data, int count, int length) {
