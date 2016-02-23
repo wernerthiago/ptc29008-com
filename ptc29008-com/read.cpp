@@ -46,8 +46,8 @@ int main(){
 
 	write(STDOUT_FILENO,&c,1);              // if new data is available on the serial port, print it out
 	char * frame = 0x7E;
-	char * msg = "Werner";
-	strcat(msg,frame);
+	std::string msg = "Werner";
+	strcat(frame,msg.c_str());
 	int i = 0;
 	while(i < strlen(msg)){
 		write(tty_fd,&msg[i],1);
