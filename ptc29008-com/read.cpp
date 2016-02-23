@@ -9,6 +9,37 @@
 
 using namespace std;
 
+bool send(int tty_fd, char data, int count, int length){
+	char flag = 0x7E;
+	char esc = 0x7D;
+	switch(count){
+	case 1:
+		write(tty_fd,&flag,1);
+		write(tty_fd,&data,1);
+		cout << "Case 1: " << flag << endl;
+		cout << "Case 1: " << data << endl;
+		break;
+	default:
+		if((data == 0x7E) && (count != length)){
+			write(tty_fd,&esc,1);
+			cout << esc << endl;
+			write(tty_fd,&data,1);
+			cout << "Primeira condição: " << data << endl;
+		}else{
+			if(count == length){
+				write(tty_fd,&data,1);
+				cout << "Segunda condição: " << data << endl;
+				write(tty_fd,&flag,1);
+				cout << "Segunda condição: " << flag << endl;
+			}else{
+				write(tty_fd,&data,1);
+				cout << "Terceira condição: " << data << endl;
+			}
+		}
+		break;
+	}
+}
+
 int main(){
 	struct termios tio;
 	struct termios stdio;
@@ -44,19 +75,14 @@ int main(){
 
 	tcsetattr(tty_fd,TCSANOW,&tio);
 
-	write(STDOUT_FILENO,&c,1);              // if new data is available on the serial port, print it out
-	char * frame = 0x7E;
-	std::string msg = "Werner";
-	strcat(frame,msg.c_str());
-	int i = 0;
-	while(i < strlen(msg)){
-		write(tty_fd,&msg[i],1);
-		cout << msg[i] << endl;
+	char * msg = "Werner";
+	int i = 1;
+	while(i < strlen(msg)+1){
+		send(tty_fd,msg[i-1],i,strlen(msg));
 		i++;
 	}
-	sleep(2);
+	sleep(4);
 	close(tty_fd);
-	tcsetattr(STDOUT_FILENO,TCSANOW,&old_stdio);
 
 	return EXIT_SUCCESS;
 }
