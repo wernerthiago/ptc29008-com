@@ -6,20 +6,10 @@
  */
 
 #include "APC220.h"
-#include <string.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <unistd.h>
-#include <fcntl.h>
-#include <termios.h>
-#include <iostream>
-#include <sys/stat.h>
-#include <sys/types.h>
 
 using namespace std;
 
 APC220::APC220() {
-	// TODO Auto-generated constructor stub
 	struct termios tio;
 	struct termios stdio;
 	struct termios old_stdio;
@@ -35,19 +25,21 @@ APC220::APC220() {
 	stdio.c_cc[VTIME]=0;
 	tcsetattr(STDOUT_FILENO,TCSANOW,&stdio);
 	tcsetattr(STDOUT_FILENO,TCSAFLUSH,&stdio);
-	fcntl(STDIN_FILENO, F_SETFL, O_NONBLOCK);
+	fcntl(STDIN_FILENO, F_SETFL, O_NONBLOCK);       // make the reads non-blocking
 
 	memset(&tio,0,sizeof(tio));
 	tio.c_iflag=0;
 	tio.c_oflag=0;
-	tio.c_cflag=CS8|CREAD|CLOCAL;
+	tio.c_cflag=CS8|CREAD|CLOCAL;           // 8n1, see termios.h for more information
 	tio.c_lflag=0;
 	tio.c_cc[VMIN]=1;
 	tio.c_cc[VTIME]=5;
 
-	tty_fd=open("/dev/ttyUSB0", O_RDWR | O_NONBLOCK);
-	cfsetospeed(&tio,B9600);
-	cfsetispeed(&tio,B9600);
+	this->tty_fd=open("/dev/ttyUSB0", O_RDWR | O_NONBLOCK);
+	cfsetospeed(&tio,B9600);            // 115200 baud
+	cfsetispeed(&tio,B9600);            // 115200 baud
+
+	tcsetattr(this->tty_fd,TCSANOW,&tio);
 }
 
 APC220::~APC220() {
@@ -58,9 +50,9 @@ void APC220::send(char* msg) {
 	int i = 1;
 	while(i < strlen(msg)+1){
 		sendFSM(tty_fd,msg[i-1],i,strlen(msg));
+		sleep(1);
 		i++;
 	}
-	sleep(4);
 	return;
 }
 
@@ -102,19 +94,30 @@ void APC220::sendFSM(int tty_fd, char data, int count, int length) {
 	switch(count){
 	case 1:
 		write(tty_fd,&flag,1);//0x7E
+//		sleep(1);
 		write(tty_fd,&data,1);//Data
+//		sleep(1);
+		cout << "Enviando: " << data << endl;
 		break;
 	default:
 		if(((data == 0x7E) || (data == 0x7D)) && (count != length)){
 			write(tty_fd,&esc,1); //0x7D
+//			sleep(1);
 			data = data ^ 0x20;
 			write(tty_fd,&data,1); //data XOR 0x20
+			cout << "Enviando: " << data << endl;
+//			sleep(1);
 		}else{
 			if(count == length){
 				write(tty_fd,&data,1);
+				cout << "Enviando: " << data << endl;
+//				sleep(1);
 				write(tty_fd,&flag,1);
+//				sleep(1);
 			}else{
 				write(tty_fd,&data,1);
+				cout << "Enviando: " << data << endl;
+//				sleep(1);
 			}
 		}
 		break;

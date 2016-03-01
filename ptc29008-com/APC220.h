@@ -8,6 +8,16 @@
 #ifndef APC220_H_
 #define APC220_H_
 
+#include <string.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <termios.h>
+#include <iostream>
+#include <sys/stat.h>
+#include <sys/types.h>
+
 class APC220 {
 public:
 	APC220();
