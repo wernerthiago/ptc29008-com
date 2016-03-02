@@ -12,9 +12,6 @@ using namespace std;
 APC220::APC220() {
 	struct termios tio;
 	struct termios stdio;
-	struct termios old_stdio;
-
-	tcgetattr(STDOUT_FILENO,&old_stdio);
 
 	memset(&stdio,0,sizeof(stdio));
 	stdio.c_iflag=0;
@@ -23,9 +20,6 @@ APC220::APC220() {
 	stdio.c_lflag=0;
 	stdio.c_cc[VMIN]=1;
 	stdio.c_cc[VTIME]=0;
-	tcsetattr(STDOUT_FILENO,TCSANOW,&stdio);
-	tcsetattr(STDOUT_FILENO,TCSAFLUSH,&stdio);
-	fcntl(STDIN_FILENO, F_SETFL, O_NONBLOCK);       // make the reads non-blocking
 
 	memset(&tio,0,sizeof(tio));
 	tio.c_iflag=0;
@@ -46,46 +40,77 @@ APC220::~APC220() {
 	// TODO Auto-generated destructor stub
 }
 
+void APC220::closed() {
+	close(tty_fd);
+}
+
+char * APC220::receiveFSM() {
+	int receive = -1;
+	int i = 0;
+	bool bandeira = true;
+	unsigned char data = '0';
+	char buffer[MAX_LENGTH] = {0};
+
+	while(i < MAX_LENGTH){
+		receive = read(this->tty_fd,&data,1);
+		if(receive != -1){
+			sleep(1);
+		}else{
+			if(receive == 0){
+				cout << "receive = 0" << endl;
+			}
+		}
+		switch(receive){
+		case -1:
+			break;
+		case 0:
+			if(data == 0x7E){
+				cout << "FIM!" << endl;
+				return buffer;
+			}else{
+				cout << "Receive = 0, mas não terminou a mensagem!" << endl;
+				cout << "Erro inesperado!" << endl;
+				return buffer;
+			}
+		default:
+			switch(data){
+			case 0x7E:
+				if(bandeira == true){
+					bandeira = false;
+				}else{
+					return buffer;
+				}
+				break;
+			case 0x7D:
+				break;
+			case 0x5E:
+				data = data ^ 0x20;
+				buffer[i] = data;
+				i++;
+				break;
+			case 0x5D:
+				data = data ^ 0x20;
+				buffer[i] = data;
+				i++;
+				break;
+			default:
+				buffer[i] = data;
+				i++;
+				break;
+			}
+			break;
+		}
+	}
+}
+
 void APC220::send(char* msg) {
 	int i = 1;
-	while(i < strlen(msg)+1){
+	while(i < (strlen(msg)+1)){
 		sendFSM(tty_fd,msg[i-1],i,strlen(msg));
 		sleep(1);
 		i++;
 	}
 	return;
-}
-
-void APC220::closed() {
-	close(tty_fd);
-}
-
-char * APC220::receive(){
-	char * mensagem;
-	int i = 0;
-	while(mensagem[i] = receiveFSM()){
-		i++;
-	}
-	return mensagem;
-}
-
-char APC220::receiveFSM() {
-	char data;
-	int receive = read(tty_fd,&data,1);
-	switch(data){
-	case 0x7E:
-		receive = read(tty_fd,&data,1);
-		return data;
-		break;
-	case 0x7D:
-		receive = read(tty_fd,&data,1);
-		data = data ^ 0x20;
-		return data;
-		break;
-	default:
-		return data;
-		break;
-	}
 }
 
 void APC220::sendFSM(int tty_fd, char data, int count, int length) {
@@ -94,30 +119,19 @@ void APC220::sendFSM(int tty_fd, char data, int count, int length) {
 	switch(count){
 	case 1:
 		write(tty_fd,&flag,1);//0x7E
-//		sleep(1);
 		write(tty_fd,&data,1);//Data
-//		sleep(1);
-		cout << "Enviando: " << data << endl;
 		break;
 	default:
 		if(((data == 0x7E) || (data == 0x7D)) && (count != length)){
 			write(tty_fd,&esc,1); //0x7D
-//			sleep(1);
 			data = data ^ 0x20;
 			write(tty_fd,&data,1); //data XOR 0x20
-			cout << "Enviando: " << data << endl;
-//			sleep(1);
 		}else{
 			if(count == length){
 				write(tty_fd,&data,1);
-				cout << "Enviando: " << data << endl;
-//				sleep(1);
 				write(tty_fd,&flag,1);
-//				sleep(1);
 			}else{
 				write(tty_fd,&data,1);
-				cout << "Enviando: " << data << endl;
-//				sleep(1);
 			}
 		}
 		break;

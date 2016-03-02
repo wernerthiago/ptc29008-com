@@ -56,9 +56,6 @@
 //	stdio.c_lflag=0;
 //	stdio.c_cc[VMIN]=1;
 //	stdio.c_cc[VTIME]=0;
-//	//tcsetattr(STDOUT_FILENO,TCSANOW,&stdio);
-//	//tcsetattr(STDOUT_FILENO,TCSAFLUSH,&stdio);
-//	//fcntl(STDIN_FILENO, F_SETFL, O_NONBLOCK);       // make the reads non-blocking
 //
 //	memset(&tio,0,sizeof(tio));
 //	tio.c_iflag=0;
@@ -86,17 +83,11 @@
 //	return EXIT_SUCCESS;
 //}
 
-
 #include "APC220.h"
 
 int main(){
 	APC220 sender;
-	int i = 0;
-
 	sender.send("werner");
-	sleep(1);
-
-
 	//	sleep(1);
 	//	sender.send("we~rner");
 	//	sleep(1);
