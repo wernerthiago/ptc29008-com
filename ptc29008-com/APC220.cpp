@@ -9,6 +9,8 @@
 
 using namespace std;
 
+//uint8_t APC220::crcTable[256];
+
 APC220::APC220() {
 	struct termios tio;
 	struct termios stdio;
@@ -105,12 +107,31 @@ char * APC220::receiveFSM() {
 
 void APC220::send(char* msg) {
 	int i = 1;
-	while(i < (strlen(msg)+1)){
-		sendFSM(tty_fd,msg[i-1],i,strlen(msg));
+
+	unsigned short fcs = (uint16_t)this->crcFast(msg,strlen(msg));
+	char lo = fcs & 0xFF;
+	char hi = fcs >> 8;
+	char * payload = appendCharToCharArray(msg,lo);
+	payload = appendCharToCharArray(payload,hi);
+	cout << "Enviando: "<< payload << endl;
+	while(i < (strlen(payload)+1)){
+		sendFSM(tty_fd,payload[i-1],i,strlen(payload));
 		sleep(1);
 		i++;
 	}
 	return;
+}
+
+char * APC220::appendCharToCharArray(char* array, char a){
+	size_t len = strlen(array);
+
+	char* ret = new char[len+2];
+
+	strcpy(ret, array);
+	ret[len] = a;
+	ret[len+1] = '\0';
+
+	return ret;
 }
 
 void APC220::sendFSM(int tty_fd, char data, int count, int length) {
@@ -136,4 +157,12 @@ void APC220::sendFSM(int tty_fd, char data, int count, int length) {
 		}
 		break;
 	}
+}
+
+unsigned short APC220::crcFast(char * message, int nBytes){
+	register int counter;
+	register unsigned short crc = 0;
+	for( counter = 0; counter < nBytes; counter++)
+		crc = (crc<<8) ^ crc16tab[((crc>>8) ^ *(char *)message++)&0x00FF];
+	return crc;
 }
