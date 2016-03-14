@@ -20,23 +20,44 @@
 #include <sys/types.h>
 #include <stdint.h>
 #define MAX_LENGTH 255
-#define WIDTH  (8 * sizeof(uint8_t))
-#define TOPBIT (1 << (WIDTH - 1))
-#define POLYNOMIAL 0xD8  /* 11011 followed by 0's */
+
+using namespace std;
+
+enum Protocol{
+	PT1 = 'A',
+	PT2 = 'B',
+	PT3 = 'C'
+};
 
 class APC220 {
 public:
 	APC220();
 	virtual ~APC220();
-	void send(char * msg);
-	char * receiveFSM();
+	bool send(char* msg);
+	string receiveFSM();
 	void closed();
-	uint8_t Sum(uint8_t const message[], int nBytes);
 	unsigned short crcFast(char * message, int nBytes);
 	char* appendCharToCharArray(char* array, char a);
 	void sendFSM(int tty_fd, char data, int count, int length);
-	uint8_t crcTable[MAX_LENGTH];
+	string crcReception(string teste);
+	bool timeout();
+	bool sendControl();
+	string headerReception(string mensagem);
+	void setPTC(Protocol ptc){
+		this->ptc = ptc;
+	}
+	void setSEQ(int seq){
+		this->seq = seq;
+	}
+	Protocol getPTC(){
+		return this->ptc;
+	}
+	int getSEQ(){
+		return this->seq;
+	}
 private:
+	Protocol ptc;
+	int seq;
 	int tty_fd;
 };
 
