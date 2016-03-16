@@ -108,10 +108,10 @@ char * APC220::receiveFSM() {
 	}
 }
 
-bool APC220::send(char* msg) {
+bool APC220::send(char msg[]) {
 	int i = 1;
 	string mensagem;
-
+	cout << msg << endl;
 	//Adicionando a SEQ
 	//	mensagem = msg;
 	//	mensagem.insert(0,1,getPTC());
@@ -148,7 +148,7 @@ bool APC220::send(char* msg) {
 
 	if(timeout()){
 		char * arq = receiveFSM();
-		//		cout << "ARQ: " << arq << endl;
+		cout << "ARQ: " << arq << endl;
 		arq = crcReception(arq);
 		arq = headerReception(arq);
 		if(arq == "1"){

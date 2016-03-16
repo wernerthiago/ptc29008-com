@@ -20,6 +20,8 @@
 #include <sys/types.h>
 #include <stdint.h>
 #define MAX_LENGTH 255
+#define MAX_DADOS 261
+#define MAX_CONTROLE 262
 
 using namespace std;
 
@@ -33,7 +35,7 @@ class APC220 {
 public:
 	APC220();
 	virtual ~APC220();
-	bool send(char* msg);
+	bool send(char msg[]);
 	char * receiveFSM();
 	void closed();
 	unsigned short crcFast(char * message, int nBytes);
